@@ -30,10 +30,15 @@ export const getUserStreams = (
   headers: TwitchRequestHeaders
 ): Observable<Array<Stream>> =>
   ajax
-    .getJSON<StreamsResponse>(`https://api.twitch.tv/helix/streams?user_id=${userId}`, headers)
+    .getJSON<StreamsResponse>(
+      `https://api.twitch.tv/helix/streams?user_id=${userId}`,
+      headers
+    )
     .map(response => response.data);
 
 export const getStreamTags = (userId: string, headers: TwitchRequestHeaders) =>
-  getUserStreams(userId, headers)
-    .map(streams => head(streams).map(s => s.tag_ids).getOrElse([]))
+  ajax
+    .getJSON(
+      `https://api.twitch.tv/helix/streams/tags?broadcaster_id=${userId}`
+    )
     .toPromise();

@@ -92,6 +92,16 @@ export const getAllTags = (
     )
     .toPromise();
 
+export const getStreamTags = (
+  broadcasterId: string,
+  headers: TwitchRequestHeaders
+) =>
+  ajax
+    .getJSON(
+      `https://api.twitch.tv/helix/tags/streams?broadcaster_id=${broadcasterId}`
+    )
+    .toPromise();
+
 const getLabelFor = (tag: TwitchTag, locale: string): string =>
   tag.localization_names[locale.toLowerCase()] ||
   tag.localization_names['en-us'];
@@ -115,35 +125,13 @@ export const prepareOptions = (
     .map(compose(sortByName, assignLabels(locale)))
     .getOrElse([]);
 
-/**
- * Add a parameter, either "add" or "remove" with tag IDs separated by commas
- */
-const addParam = (op: 'add' | 'remove', tags: Array<TwitchTagWithLabel>) => {
-  if (!tags.length) {
-    return {};
-  }
-
-  return { [op]: tags.map(tag => tag.tag_id) };
-};
-
 export const updateTags = (headers: TwitchRequestHeaders) => (
   tags: Array<TwitchTagWithLabel>
-) => (streamId: string) => {
-  const toAdd = tags;
-
-  // TODO: how to track removals if we can't even get the active list w/o going live
-  const toRemove: Array<TwitchTagWithLabel> = [];
-
-  const params = {
-    ...addParam('add', toAdd),
-    ...addParam('remove', toRemove)
-  };
-
-  return ajax
+) => (streamId: string) =>
+  ajax
     .put(
       `https://api.twitch.tv/helix/tags/streams?broadcaster_id=${streamId}`,
-      JSON.stringify(params),
+      JSON.stringify({ tag_ids: tags.map(tag => tag.tag_id) }),
       headers
     )
     .toPromise();
-};
